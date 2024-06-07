@@ -1,0 +1,21 @@
+{
+  "products":[
+    {
+      "id":1,
+      "name":"Samsung Galaxy",
+      "color":"black",
+      "price":15000,
+      "category":"mobile",
+      "brand": "samsung"
+    },
+    {
+      "id":2,
+      "name":"T-shirt",
+      "color":"blue",
+      "price":5000,
+      "category":"clothing",
+      "brand": "Nike"
+    }
+    
+  ]
+}
