@@ -1,12 +1,13 @@
 import React from "react";
 import {addToCount, removeToCount} from '../../hooks/commonStore/action';
 import { useDispatch } from "react-redux";
-// import {useSelector} from 'react-redux';
+import {productList} from '../../hooks/commonStore/productAction';
+import {useSelector} from 'react-redux';
 
 function MyButton() {
   const dispatch = useDispatch();
-  // let data = useSelector((state:any)=>state.productData);
-  // console.warn("data in main component",data);
+  let data = useSelector((state:any)=>state.productData);
+  console.warn("data in main component",data);
   const product = {
     name:'I Phone',
     category:'mobile',
@@ -19,6 +20,9 @@ function MyButton() {
     </div>
     <div>
     <button onClick={() => dispatch(removeToCount(product.name))}> Remove_from_Count </button>
+    </div>
+    <div>
+    <button onClick={() => dispatch(productList())}> Call_Product_List </button>
     </div>
     </div>
 }
