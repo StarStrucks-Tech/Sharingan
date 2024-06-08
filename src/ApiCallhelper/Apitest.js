@@ -1,57 +1,66 @@
-import ApiHelper from '../ApiCallhelper/CallHelper.js';
+import axios from 'axios';
+import util from 'util';
+import MockAdapter from 'axios-mock-adapter';
+import ApiHelper from '../ApiCallhelper/CallHelper.js'; 
 
-const apiHelper = new ApiHelper('https://jsonplaceholder.typicode.com');
+const mockAxios = new MockAdapter(axios);
+const baseURL = 'https://api.example.com';
+const accessToken = 'your-access-token-here';
+const apiHelper = new ApiHelper(baseURL, accessToken);
 
-const runTests = async () => {
+
+function runTest(testName, testFunction) {
   try {
-    // Add a flat
-    const flatData = { name: 'Flat B', location: 'City Y', price: 1500, amenities: ['Gym', 'Pool'] };
-    await apiHelper.addFlat(flatData);
-    console.log('Flat added successfully');
-
-    // Update a flat
-    const flatId = '1'; // Replace with an actual ID from your database
-    const updatedFlatData = { price: 1200 };
-    await apiHelper.updateFlat(flatId, updatedFlatData);
-    console.log('Flat updated successfully');
-
-    // Delete a flat
-    await apiHelper.deleteFlat(flatId);
-    console.log('Flat deleted successfully');
-
-    // Find flats
-    const flats = await apiHelper.findFlats({ location: 'City X' });
-    console.log('Flats found:', flats);
-
-    // Add a student
-    const studentData = { name: 'Jane Doe', age: 22, gender: 'Female' };
-    await apiHelper.addStudent(studentData);
-    console.log('Student added successfully');
-
-    // Update a student
-    const studentId = '1'; // Replace with an actual ID from your database
-    const updatedStudentData = { age: 21 };
-    await apiHelper.updateStudent(studentId, updatedStudentData);
-    console.log('Student updated successfully');
-
-    // Delete a student
-    await apiHelper.deleteStudent(studentId);
-    console.log('Student deleted successfully');
-
-    // Find students
-    const students = await apiHelper.findStudents({ gender: 'Male' });
-    console.log('Students found:', students);
-
-    // Assign student to flat
-    await apiHelper.assignStudentToFlat(studentId, flatId);
-    console.log('Student assigned to flat successfully');
-
-    // Track student details for flat owner
-    const studentDetails = await apiHelper.trackStudentDetailsForFlatOwner(flatId);
-    console.log('Student details for flat owner:', studentDetails);
+    testFunction();
+    console.log(`${testName} passed`);
   } catch (error) {
-    console.error('Test failed:', error.message);
+    console.error(`${testName} failed: ${error.message}`);
   }
-};
+}
+// Test for addFlat
+runTest('addFlat', () => {
+  const flatData = { name: 'Flat A', address: '123 Main St' };
+  const expectedResponse = { id: '1', "name": "Flat A", "address": "123 Main St" };
 
-runTests();
+  mockAxios.onPost('/flats').reply(200, expectedResponse);
+
+  apiHelper.addFlat(flatData).then(() => {
+    const requestData = JSON.parse(JSON.stringify(mockAxios.history.post[0].data));
+    if (!util.isDeepStrictEqual(requestData, flatData)) {
+      throw new Error(`Expected request data to be ${JSON.stringify(flatData)}, but got ${JSON.stringify(requestData)}`);
+    }
+  });
+});
+// Test for findFlats
+runTest('findFlats', () => {
+  const filters = { city: 'New York' };
+  const expectedFlatList = [
+    { id: '1', name: 'Flat A', address: '123 Main St' },
+    { id: '2', name: 'Flat B', address: '456 Elm St' },
+  ];
+
+  mockAxios.onGet('/flats', { params: filters }).reply(200, expectedFlatList);
+
+  apiHelper.findFlats(filters).then((flatList) => {
+    if (JSON.stringify(flatList) !== JSON.stringify(expectedFlatList)) {
+      throw new Error(`Expected flat list to be ${JSON.stringify(expectedFlatList)}, but got ${JSON.stringify(flatList)}`);
+    }
+
+    const requestParams = mockAxios.history.get[0].params;
+    if (JSON.stringify(requestParams) !== JSON.stringify(filters)) {
+      throw new Error(`Expected request params to be ${JSON.stringify(filters)}, but got ${JSON.stringify(requestParams)}`);
+    }
+  });
+});
+
+// Test for error handling
+runTest('deleteFlat error handling', () => {
+  const expectedError = 'Error deleting flat';
+  mockAxios.onDelete('/flats/123').reply(500);
+
+  apiHelper.deleteFlat('123').catch((error) => {
+    if (error.message !== expectedError) {
+      throw new Error(`Expected error message to be "${expectedError}", but got "${error.message}"`);
+    }
+  });
+});
